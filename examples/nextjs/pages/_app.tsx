@@ -1,9 +1,12 @@
 import '../styles/globals.css';
-import type { AppProps } from 'next/app';
+import type { AppContext, AppProps } from 'next/app';
 import { FlagsmithProvider } from 'flagsmith-es/react';
 import flagsmith from 'flagsmith-es/isomorphic';
 import { IState } from 'flagsmith-es/types';
-const environmentID = "QjgYur4LQTwe5HpvbvhpzK"
+import { parseCookies } from 'nookies';
+
+const environmentID = "FILL_IN_YOURS";
+
 function MyApp({ Component, pageProps, flagsmithState }: AppProps & {flagsmithState: IState}) {
     return (
         <FlagsmithProvider flagsmith={flagsmith}
@@ -14,13 +17,19 @@ function MyApp({ Component, pageProps, flagsmithState }: AppProps & {flagsmithSt
     );
 }
 
+MyApp.getInitialProps = async ({ ctx }: AppContext) => {
+    const cookies = parseCookies(ctx);
 
-MyApp.getInitialProps = async () => {
-  // calls page's `getInitialProps` and fills `appProps.pageProps`
-  await flagsmith.init({ // fetches flags on the server
-      environmentID,
-  });
-  return { flagsmithState: flagsmith.getState() }
+    await flagsmith.init({ // fetches flags on the server
+        environmentID,
+        identity: cookies.identity ? cookies.identity : undefined,
+    });
+
+    await new Promise((resolve) => { // simulate another asynchronous code
+        setTimeout(resolve, 5000);
+    });
+
+    return { flagsmithState: flagsmith.getState() }
 }
 
 export default MyApp;
